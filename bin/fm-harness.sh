@@ -258,6 +258,7 @@ harness_process_verdict() {  # <pid>
     # Anchored, so an unrelated command containing that fragment never matches.
     codebuddy) echo "comm codebuddy"; return ;;
     qoder) echo "comm qoder"; return ;;
+    mcode) echo "comm mcode"; return ;;
     command-code) echo "comm commandcode"; return ;;
     node*|python*)
       # Bare interpreter: match the harness name in its script path.
@@ -273,6 +274,7 @@ harness_process_verdict() {  # <pid>
         *grok*) echo "args grok"; return ;;
         *codebuddy*) echo "args codebuddy"; return ;;
         *qoder*) echo "args qoder"; return ;;
+        *mcode*) echo "args mcode"; return ;;
         *" pi "*|*/pi) echo "args pi"; return ;;
       esac ;;
   esac
@@ -419,7 +421,7 @@ supervision_primary_pin() {
   local pin=${FM_SUPERVISION_PRIMARY_HARNESS:-}
   [ "${FM_SUPERVISION_ACTOR:-}" = branch ] && [ -n "$pin" ] || return 0
   case "$pin" in
-    claude|codex|opencode|pi|pi-signed|grok|kimi|cursor|gemini|muse|rovo|omp|agy|devin|commandcode|polytoken|codebuddy|qoder)
+    claude|codex|opencode|pi|pi-signed|grok|kimi|cursor|gemini|muse|rovo|omp|agy|devin|commandcode|polytoken|codebuddy|qoder|mcode)
       printf '%s\n' "$pin"
       ;;
     *)

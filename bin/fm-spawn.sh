@@ -2214,7 +2214,7 @@ if [ "$RELAUNCH" -eq 1 ]; then
   }
 elif [ "$KIND" = secondmate ]; then
   case "${POS[1]:-}" in
-  '' | claude | codex | opencode | pi | pi-signed | grok | kimi | cursor | gemini | muse | rovo | omp | agy | devin | commandcode | polytoken | codebuddy | qoder)
+  '' | claude | codex | opencode | pi | pi-signed | grok | kimi | cursor | gemini | muse | rovo | omp | agy | devin | commandcode | polytoken | codebuddy | qoder | mcode)
     ARG3=${POS[1]:-}
     ;;
   *' '*)
@@ -2644,6 +2644,8 @@ launch_template() {
   # qoder 1.1.73 has no --yolo and no --prompt: autonomy is
   # --dangerously-skip-permissions and the query is positional.
   qoder) printf '%s' 'env -u CLAUDECODE -u PI_CODING_AGENT -u GROK_AGENT -u FM_PI_HARNESS -u GEMINI_CLI -u CURSOR_AGENT -u CURSOR_INVOKED_AS __QODERBIN__ --dangerously-skip-permissions __MODELFLAG____EFFORTFLAG__"$(__OPINPUT__ encode launch-brief < __BRIEF__)"' ;;
+  # mcode (MiniMax Code): initial prompt is passed as a positional argument.
+  mcode) printf '%s' 'env -u CLAUDECODE -u PI_CODING_AGENT -u GROK_AGENT -u FM_PI_HARNESS -u GEMINI_CLI -u CURSOR_AGENT -u CURSOR_INVOKED_AS __MCODEBIN__ __MODELFLAG____EFFORTFLAG__"$(__OPINPUT__ encode launch-brief < __BRIEF__)"' ;;
   *) return 1 ;;
   esac
 }
@@ -2713,7 +2715,7 @@ esac
 # docs/supervision-protocols/ carries no Command Code wake protocol (1.74.1).
 # polytoken has none either: only the crewmate/scout lifecycle is verified;
 # docs/supervision-protocols/ carries no polytoken primary wake protocol.
-if [ "$KIND" = secondmate ] && { [ "$HARNESS" = muse ] || [ "$HARNESS" = gemini ] || [ "$HARNESS" = agy ] || [ "$HARNESS" = devin ] || [ "$HARNESS" = commandcode ] || [ "$HARNESS" = polytoken ] || [ "$HARNESS" = codebuddy ] || [ "$HARNESS" = qoder ]; }; then
+if [ "$KIND" = secondmate ] && { [ "$HARNESS" = muse ] || [ "$HARNESS" = gemini ] || [ "$HARNESS" = agy ] || [ "$HARNESS" = devin ] || [ "$HARNESS" = commandcode ] || [ "$HARNESS" = polytoken ] || [ "$HARNESS" = codebuddy ] || [ "$HARNESS" = qoder ] || [ "$HARNESS" = mcode ]; }; then
   echo "error: $HARNESS is a verified crewmate/scout adapter only and cannot run a secondmate; it has no primary supervision protocol. Select a harness verified for secondmates." >&2
   exit 1
 fi
@@ -2764,6 +2766,12 @@ codebuddy)
 qoder)
   QODER_BIN=$(command -v qoder) || {
     echo "error: qoder executable not found on PATH; install Qoder CLI or select a different verified harness" >&2
+    exit 1
+  }
+  ;;
+mcode)
+  MCODE_BIN=$(command -v mcode) || {
+    echo "error: mcode executable not found on PATH; install MiniMax Code CLI or select a different verified harness" >&2
     exit 1
   }
   ;;
@@ -3063,7 +3071,7 @@ model_flag_for_harness() {
   local harness=$1 model=$2
   [ -n "$model" ] && [ "$model" != default ] || return 0
   case "$harness" in
-  claude | codex | opencode | pi | pi-signed | grok | kimi | cursor | gemini | muse | rovo | omp | agy | devin | commandcode | codebuddy | qoder)
+  claude | codex | opencode | pi | pi-signed | grok | kimi | cursor | gemini | muse | rovo | omp | agy | devin | commandcode | codebuddy | qoder | mcode)
     printf -- '--model %s ' "$(shell_quote "$model")"
     ;;
   # polytoken encodes reasoning effort inside the model reference, so the
@@ -3124,6 +3132,11 @@ effort_flag_for_harness() {
     # low|medium|high are unverified, so they are omitted (record-and-omit).
     case "$effort" in
     low | medium | high) printf -- '--reasoning-effort %s ' "$(shell_quote "$effort")" ;;
+    esac
+    ;;
+  mcode)
+    case "$effort" in
+    low | medium | high | xhigh | max) printf -- '--effort %s ' "$(shell_quote "$effort")" ;;
     esac
     ;;
   commandcode)
@@ -6078,6 +6091,7 @@ commandcode)
 agy) LAUNCH=${LAUNCH//__AGYBIN__/"$(shell_quote "$AGY_BIN")"} ;;
 codebuddy) LAUNCH=${LAUNCH//__CODEBUDDYBIN__/"$(shell_quote "$CODEBUDDY_BIN")"} ;;
 qoder) LAUNCH=${LAUNCH//__QODERBIN__/"$(shell_quote "$QODER_BIN")"} ;;
+mcode) LAUNCH=${LAUNCH//__MCODEBIN__/"$(shell_quote "$MCODE_BIN")"} ;;
 polytoken)
   LAUNCH=${LAUNCH//__POLYTOKENBIN__/"$(shell_quote "$POLYTOKEN_BIN")"}
   LAUNCH=${LAUNCH//__POLYTOKENCONFIG__/"$(shell_quote "$(fm_polytoken_config_dir "$STATE_REAL" "$ID")")"}
@@ -6111,7 +6125,7 @@ case "$LAUNCH" in
   ;;
 esac
 case "$HARNESS" in
-claude | codex | opencode | pi | pi-signed | grok | kimi | gemini | muse | rovo | agy | devin | commandcode | codebuddy | qoder)
+claude | codex | opencode | pi | pi-signed | grok | kimi | gemini | muse | rovo | agy | devin | commandcode | codebuddy | qoder | mcode)
   LAUNCH="env -u CURSOR_AGENT -u CURSOR_INVOKED_AS -u GEMINI_CLI $LAUNCH"
   ;;
 esac

@@ -458,6 +458,7 @@ FM_DELIVERY_KIMI_BUSY_REGEX_DEFAULT='^[[:space:]]*(🌑|🌒|🌓|🌔|🌕|🌖
 # qoder-regex folds in bin/fm-busy-lib.sh.
 FM_DELIVERY_CODEBUDDY_BUSY_REGEX_DEFAULT='\([0-9]+s[^)]*\)|esc[[:space:]]+to[[:space:]]+(cancel|interrupt)'
 FM_DELIVERY_QODER_BUSY_REGEX_DEFAULT='esc[[:space:]]+to[[:space:]]+(cancel|interrupt)'
+FM_DELIVERY_MCODE_BUSY_REGEX_DEFAULT='esc[[:space:]]+to[[:space:]]+(cancel|interrupt)|\([0-9]+s[^)]*\)'
 
 fm_busy_lines_match() {  # [harness]
   local harness=${1:-} lines regex
@@ -480,6 +481,7 @@ fm_busy_lines_match() {  # [harness]
       cursor) regex=$FM_DELIVERY_CURSOR_BUSY_REGEX_DEFAULT ;;
       codebuddy) regex=$FM_DELIVERY_CODEBUDDY_BUSY_REGEX_DEFAULT ;;
       qoder) regex=$FM_DELIVERY_QODER_BUSY_REGEX_DEFAULT ;;
+      mcode) regex=$FM_DELIVERY_MCODE_BUSY_REGEX_DEFAULT ;;
       '') regex=$FM_DELIVERY_BUSY_REGEX_DEFAULT ;;
       *)
         # A supplied harness must never borrow another harness's signature.

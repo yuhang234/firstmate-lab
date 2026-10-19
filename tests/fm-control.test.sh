@@ -35,7 +35,7 @@ mkdir -p "$TMP_ROOT"
 TMP_ROOT=$(cd "$TMP_ROOT" && pwd)
 trap 'rm -rf "$TMP_ROOT"' EXIT
 
-VERIFIED_HARNESSES="claude codex opencode pi pi-signed grok kimi cursor muse omp devin commandcode codebuddy qoder"
+VERIFIED_HARNESSES="claude codex opencode pi pi-signed grok kimi cursor muse omp devin commandcode codebuddy qoder mcode"
 
 # The expectation table, written out independently of the implementation so a
 # silent change to either side shows up here. The fourth field is the composer
@@ -53,6 +53,7 @@ verified_adapter_contract() {  # <harness> -> exit command, interrupt key, repea
     commandcode) printf '/quit\tEscape\t1\t\n' ;;
     codebuddy) printf '/exit\tEscape\t1\t\n' ;;
     qoder) printf '/quit\tEscape\t1\t\n' ;;
+    mcode) printf '/exit\tEscape\t1\t\n' ;;
     grok) printf '/exit\tC-c\t1\t\n' ;;
     kimi) printf '/exit\tEscape\t1\t\n' ;;
     cursor) printf '/exit\tEscape\t1\t\n' ;;
@@ -546,6 +547,8 @@ test_harness_kind_capability() {
     && fail "codebuddy has no primary supervision protocol and must not claim a secondmate"
   fm_control_harness_supports_kind qoder secondmate \
     && fail "qoder has no primary supervision protocol and must not claim a secondmate"
+  fm_control_harness_supports_kind mcode secondmate \
+    && fail "mcode has no primary supervision protocol and must not claim a secondmate"
   for harness in claude codex opencode pi pi-signed grok kimi omp; do
     fm_control_harness_supports_kind "$harness" secondmate \
       || fail "$harness should be able to run a secondmate"

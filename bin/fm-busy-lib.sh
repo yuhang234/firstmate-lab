@@ -946,6 +946,17 @@ fm_busy_qoder_tail_busy() {
     | grep -qiE "${FM_BUSY_QODER_REGEX:-esc to (cancel|interrupt)}"
 }
 
+# fm_busy_mcode_tail_busy: the MiniMax Code (mcode) rendered-tail fallback.
+# Consumes the tail on stdin; 0 when mcode's verified busy signature matches:
+# the `esc to cancel` or `esc to interrupt` token, or elapsed time in status row.
+# mcode exposes no hook surface, so this fallback is the only pane-side source;
+# it is never armed as a semantic writer (fm_busy_sources_for_harness trusts
+# nothing for it). FM_BUSY_MCODE_REGEX overrides the signature.
+fm_busy_mcode_tail_busy() {
+  grep -v '^[[:space:]]*$' | tail -12 \
+    | grep -qiE "${FM_BUSY_MCODE_REGEX:-esc to (cancel|interrupt)|\([0-9]+s[^)]*\)}"
+}
+
 # --- launch-prompt signatures (fm_busy_launch_prompt_parked) ----------------
 #
 # Each function consumes a captured pane tail on stdin (the caller's whole
@@ -1245,6 +1256,25 @@ fm_busy_classify() {  # <backend> <target> <harness> <id> <state-dir> [tail40]
         printf 'busy qoder-regex'
       else
         printf 'unknown qoder-regex'
+      fi
+      return 0
+      ;;
+    mcode)
+      if [ -z "$tail40" ]; then
+        if command -v fm_backend_capture >/dev/null 2>&1; then
+          tail40=$(fm_backend_capture "$backend" "$target" 40 2>/dev/null) || {
+            printf 'unknown capture-failed'
+            return 0
+          }
+        else
+          printf 'unknown capture-failed'
+          return 0
+        fi
+      fi
+      if printf '%s' "$tail40" | fm_busy_mcode_tail_busy; then
+        printf 'busy mcode-regex'
+      else
+        printf 'unknown mcode-regex'
       fi
       return 0
       ;;
