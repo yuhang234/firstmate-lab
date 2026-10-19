@@ -2214,7 +2214,7 @@ if [ "$RELAUNCH" -eq 1 ]; then
   }
 elif [ "$KIND" = secondmate ]; then
   case "${POS[1]:-}" in
-  '' | claude | codex | opencode | pi | pi-signed | grok | kimi | cursor | gemini | muse | rovo | omp | agy | devin | commandcode | polytoken)
+  '' | claude | codex | opencode | pi | pi-signed | grok | kimi | cursor | gemini | muse | rovo | omp | agy | devin | commandcode | polytoken | codebuddy | qoder)
     ARG3=${POS[1]:-}
     ;;
   *' '*)
@@ -2638,6 +2638,8 @@ launch_template() {
   # when a supported effort is requested, since a second --config-override
   # would silently discard the first (confirmed live).
   rovo) printf '%s' 'env -u CLAUDECODE -u PI_CODING_AGENT -u GROK_AGENT -u FM_PI_HARNESS __ROVOBIN__ run --yolo __MODELFLAG____ROVOCONFIGOVERRIDE__' ;;
+  codebuddy) printf '%s' 'env -u CLAUDECODE -u PI_CODING_AGENT -u GROK_AGENT -u FM_PI_HARNESS -u GEMINI_CLI -u CURSOR_AGENT -u CURSOR_INVOKED_AS __CODEBUDDYBIN__ --dangerously-skip-permissions __MODELFLAG____EFFORTFLAG__--prompt "$(__OPINPUT__ encode launch-brief < __BRIEF__)"' ;;
+  qoder) printf '%s' 'env -u CLAUDECODE -u PI_CODING_AGENT -u GROK_AGENT -u FM_PI_HARNESS -u GEMINI_CLI -u CURSOR_AGENT -u CURSOR_INVOKED_AS __QODERBIN__ --yolo __MODELFLAG____EFFORTFLAG__--prompt "$(__OPINPUT__ encode launch-brief < __BRIEF__)"' ;;
   *) return 1 ;;
   esac
 }
@@ -2689,7 +2691,7 @@ case "$ARG3" in
   ;;
 esac
 
-# muse, gemini, agy, devin, commandcode, and polytoken are verified as CREWMATE/SCOUT adapters only. A secondmate is
+# muse, gemini, agy, devin, commandcode, polytoken, codebuddy, and qoder are verified as CREWMATE/SCOUT adapters only. A secondmate is
 # a firstmate instance, so it needs a primary supervision protocol.
 # gemini has none: docs/supervision-protocols/ carries no gemini wake protocol
 # and this task verified only crewmate-side launch, busy state, interrupt, and
@@ -2707,7 +2709,7 @@ esac
 # docs/supervision-protocols/ carries no Command Code wake protocol (1.74.1).
 # polytoken has none either: only the crewmate/scout lifecycle is verified;
 # docs/supervision-protocols/ carries no polytoken primary wake protocol.
-if [ "$KIND" = secondmate ] && { [ "$HARNESS" = muse ] || [ "$HARNESS" = gemini ] || [ "$HARNESS" = agy ] || [ "$HARNESS" = devin ] || [ "$HARNESS" = commandcode ] || [ "$HARNESS" = polytoken ]; }; then
+if [ "$KIND" = secondmate ] && { [ "$HARNESS" = muse ] || [ "$HARNESS" = gemini ] || [ "$HARNESS" = agy ] || [ "$HARNESS" = devin ] || [ "$HARNESS" = commandcode ] || [ "$HARNESS" = polytoken ] || [ "$HARNESS" = codebuddy ] || [ "$HARNESS" = qoder ]; }; then
   echo "error: $HARNESS is a verified crewmate/scout adapter only and cannot run a secondmate; it has no primary supervision protocol. Select a harness verified for secondmates." >&2
   exit 1
 fi
@@ -2746,6 +2748,18 @@ devin)
 commandcode)
   COMMANDCODE_BIN=$(command -v commandcode) || {
     echo "error: commandcode executable not found on PATH" >&2
+    exit 1
+  }
+  ;;
+codebuddy)
+  CODEBUDDY_BIN=$(command -v codebuddy) || {
+    echo "error: codebuddy executable not found on PATH; install CodeBuddy CLI or select a different verified harness" >&2
+    exit 1
+  }
+  ;;
+qoder)
+  QODER_BIN=$(command -v qoder) || {
+    echo "error: qoder executable not found on PATH; install Qoder CLI or select a different verified harness" >&2
     exit 1
   }
   ;;
@@ -3045,7 +3059,7 @@ model_flag_for_harness() {
   local harness=$1 model=$2
   [ -n "$model" ] && [ "$model" != default ] || return 0
   case "$harness" in
-  claude | codex | opencode | pi | pi-signed | grok | kimi | cursor | gemini | muse | rovo | omp | agy | devin | commandcode)
+  claude | codex | opencode | pi | pi-signed | grok | kimi | cursor | gemini | muse | rovo | omp | agy | devin | commandcode | codebuddy | qoder)
     printf -- '--model %s ' "$(shell_quote "$model")"
     ;;
   # polytoken encodes reasoning effort inside the model reference, so the
@@ -3093,6 +3107,11 @@ effort_flag_for_harness() {
     # omitted rather than passed as known-bad values (record-and-omit).
     case "$effort" in
     low | medium | high) printf -- '--effort %s ' "$(shell_quote "$effort")" ;;
+    esac
+    ;;
+  codebuddy | qoder)
+    case "$effort" in
+    low | medium | high | xhigh | max) printf -- '--effort %s ' "$(shell_quote "$effort")" ;;
     esac
     ;;
   commandcode)
@@ -6029,6 +6048,8 @@ commandcode)
   LAUNCH=${LAUNCH//__COMMANDCODEMOD__/$COMMANDCODEMOD}
   ;;
 agy) LAUNCH=${LAUNCH//__AGYBIN__/"$(shell_quote "$AGY_BIN")"} ;;
+codebuddy) LAUNCH=${LAUNCH//__CODEBUDDYBIN__/"$(shell_quote "$CODEBUDDY_BIN")"} ;;
+qoder) LAUNCH=${LAUNCH//__QODERBIN__/"$(shell_quote "$QODER_BIN")"} ;;
 polytoken)
   LAUNCH=${LAUNCH//__POLYTOKENBIN__/"$(shell_quote "$POLYTOKEN_BIN")"}
   LAUNCH=${LAUNCH//__POLYTOKENCONFIG__/"$(shell_quote "$(fm_polytoken_config_dir "$STATE_REAL" "$ID")")"}
@@ -6062,7 +6083,7 @@ case "$LAUNCH" in
   ;;
 esac
 case "$HARNESS" in
-claude | codex | opencode | pi | pi-signed | grok | kimi | gemini | muse | rovo | agy | devin | commandcode)
+claude | codex | opencode | pi | pi-signed | grok | kimi | gemini | muse | rovo | agy | devin | commandcode | codebuddy | qoder)
   LAUNCH="env -u CURSOR_AGENT -u CURSOR_INVOKED_AS -u GEMINI_CLI $LAUNCH"
   ;;
 esac

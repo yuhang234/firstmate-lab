@@ -871,6 +871,12 @@ It has no primary or secondmate supervision protocol.
 The launch generates a private per-task config directory that mirrors the operator's provider/model configuration and enforces unattended permissions without modifying global configuration.
 The first-start license dialog requires an operator decision and is never accepted automatically.
 
+CodeBuddy is verified for crewmate and scout launches only; a secondmate is refused because CodeBuddy has no verified primary supervision protocol.
+Its launch uses `--dangerously-skip-permissions` for unattended autonomous execution, `/exit` for exit, and `Escape` for interrupt; [its adapter reference](../.agents/skills/harness-adapters/references/harness/codebuddy.md) owns the launch facts and [CodeBuddy verification](verification/codebuddy.md) owns the live evidence.
+
+Qoder is verified for crewmate and scout launches only; a secondmate is refused because Qoder has no verified primary supervision protocol.
+Its launch uses `--yolo` for unattended execution, `/quit` for exit, and `Escape` for interrupt; [its adapter reference](../.agents/skills/harness-adapters/references/harness/qoder.md) owns the launch facts and [Qoder verification](verification/qoder.md) owns the live evidence.
+
 ### Verification and primary supervision
 
 New harnesses get verified through a supervised trial task before joining the set.
@@ -1308,7 +1314,7 @@ Typed resolution additively recognizes `gemini` because AGENTS.md section 4 veri
 | Harness | Provider declaration on the opted-in resolver path |
 | --- | --- |
 | `claude`, `codex`, `grok`, `kimi`, `cursor`, `agy`, `muse` | The resolver has an authoritative single-provider mapping. |
-| Every other verified harness | Must declare `provider` explicitly; this includes multi-provider `pi`, `pi-signed`, `omp`, and `opencode`, and unmapped `gemini`, `rovo`, `devin`, and `commandcode`; omission is an actionable configuration error before any request. |
+| Every other verified harness | Must declare `provider` explicitly; this includes multi-provider `pi`, `pi-signed`, `omp`, and `opencode`, and unmapped `gemini`, `rovo`, `devin`, `commandcode`, `codebuddy`, and `qoder`; omission is an actionable configuration error before any request. |
 
 This single-provider table is separate from the frozen legacy mapping used by `fm-quota-choose.sh`, so additions cannot alter no-key routing.
 

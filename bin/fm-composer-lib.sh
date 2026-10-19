@@ -445,6 +445,8 @@ FM_DELIVERY_AGY_BUSY_REGEX_DEFAULT='esc[[:space:]]+to[[:space:]]+cancel'
 # no recorded harness never reads it as busy.
 FM_DELIVERY_POLYTOKEN_BUSY_REGEX_DEFAULT='^[[:space:]]*Running for [0-9]+([.][0-9]+)?s'
 FM_DELIVERY_KIMI_BUSY_REGEX_DEFAULT='^[[:space:]]*(🌑|🌒|🌓|🌔|🌕|🌖|🌗|🌘)[[:space:]]+·[[:space:]]+'
+FM_DELIVERY_CODEBUDDY_BUSY_REGEX_DEFAULT='esc to (cancel|interrupt)|thinking|generating'
+FM_DELIVERY_QODER_BUSY_REGEX_DEFAULT='esc to (cancel|interrupt)|thinking|generating'
 
 fm_busy_lines_match() {  # [harness]
   local harness=${1:-} lines regex
@@ -465,6 +467,8 @@ fm_busy_lines_match() {  # [harness]
       polytoken) regex=$FM_DELIVERY_POLYTOKEN_BUSY_REGEX_DEFAULT ;;
       kimi) regex=$FM_DELIVERY_KIMI_BUSY_REGEX_DEFAULT ;;
       cursor) regex=$FM_DELIVERY_CURSOR_BUSY_REGEX_DEFAULT ;;
+      codebuddy) regex=$FM_DELIVERY_CODEBUDDY_BUSY_REGEX_DEFAULT ;;
+      qoder) regex=$FM_DELIVERY_QODER_BUSY_REGEX_DEFAULT ;;
       '') regex=$FM_DELIVERY_BUSY_REGEX_DEFAULT ;;
       *)
         # A supplied harness must never borrow another harness's signature.

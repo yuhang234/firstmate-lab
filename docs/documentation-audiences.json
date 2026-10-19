@@ -189,6 +189,10 @@
       "audience": "agent-runtime"
     },
     {
+      "path": ".agents/skills/harness-adapters/references/harness/codebuddy.md",
+      "audience": "agent-runtime"
+    },
+    {
       "path": ".agents/skills/harness-adapters/references/harness/codex.md",
       "audience": "agent-runtime"
     },
@@ -234,6 +238,10 @@
     },
     {
       "path": ".agents/skills/harness-adapters/references/harness/polytoken.md",
+      "audience": "agent-runtime"
+    },
+    {
+      "path": ".agents/skills/harness-adapters/references/harness/qoder.md",
       "audience": "agent-runtime"
     },
     {
@@ -493,6 +501,10 @@
       "audience": "maintainer-verification"
     },
     {
+      "path": "docs/verification/codebuddy.md",
+      "audience": "maintainer-verification"
+    },
+    {
       "path": "docs/verification/commandcode.md",
       "audience": "maintainer-verification"
     },
@@ -526,6 +538,10 @@
     },
     {
       "path": "docs/verification/public-followup.md",
+      "audience": "maintainer-verification"
+    },
+    {
+      "path": "docs/verification/qoder.md",
       "audience": "maintainer-verification"
     },
     {

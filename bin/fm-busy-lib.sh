@@ -908,6 +908,18 @@ fm_busy_agy_tail_busy() {
     | grep -qiE 'esc[[:space:]]+to[[:space:]]+cancel'
 }
 
+# fm_busy_codebuddy_tail_busy: the CodeBuddy-only rendered-tail fallback.
+fm_busy_codebuddy_tail_busy() {
+  grep -v '^[[:space:]]*$' | tail -12 \
+    | grep -qiE "${FM_BUSY_CODEBUDDY_REGEX:-esc to (cancel|interrupt)|thinking|generating}"
+}
+
+# fm_busy_qoder_tail_busy: the Qoder-only rendered-tail fallback.
+fm_busy_qoder_tail_busy() {
+  grep -v '^[[:space:]]*$' | tail -12 \
+    | grep -qiE "${FM_BUSY_QODER_REGEX:-esc to (cancel|interrupt)|thinking|generating}"
+}
+
 # --- launch-prompt signatures (fm_busy_launch_prompt_parked) ----------------
 #
 # Each function consumes a captured pane tail on stdin (the caller's whole
@@ -1169,6 +1181,44 @@ fm_busy_classify() {  # <backend> <target> <harness> <id> <state-dir> [tail40]
         printf 'busy agy-regex'
       else
         printf 'unknown agy-regex'
+      fi
+      return 0
+      ;;
+    codebuddy)
+      if [ -z "$tail40" ]; then
+        if command -v fm_backend_capture >/dev/null 2>&1; then
+          tail40=$(fm_backend_capture "$backend" "$target" 40 2>/dev/null) || {
+            printf 'unknown capture-failed'
+            return 0
+          }
+        else
+          printf 'unknown capture-failed'
+          return 0
+        fi
+      fi
+      if printf '%s' "$tail40" | fm_busy_codebuddy_tail_busy; then
+        printf 'busy codebuddy-regex'
+      else
+        printf 'unknown codebuddy-regex'
+      fi
+      return 0
+      ;;
+    qoder)
+      if [ -z "$tail40" ]; then
+        if command -v fm_backend_capture >/dev/null 2>&1; then
+          tail40=$(fm_backend_capture "$backend" "$target" 40 2>/dev/null) || {
+            printf 'unknown capture-failed'
+            return 0
+          }
+        else
+          printf 'unknown capture-failed'
+          return 0
+        fi
+      fi
+      if printf '%s' "$tail40" | fm_busy_qoder_tail_busy; then
+        printf 'busy qoder-regex'
+      else
+        printf 'unknown qoder-regex'
       fi
       return 0
       ;;

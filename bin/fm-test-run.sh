@@ -150,6 +150,7 @@
 # tests/fixtures/<dir>/ is mapped by that directory instead. Curated family arms
 # above those also name individual tests/ files explicitly.
 set -eu
+export LC_ALL=C
 
 now_ms() {
   if command -v python3 >/dev/null 2>&1; then
@@ -293,7 +294,7 @@ family_for_basename() {
     fm-documentation-audiences.test.sh|fm-ensure-agents-md.test.sh|fm-forge-detect.test.sh|fm-grok-harness.test.sh|\
     fm-fork-free-helpers.test.sh|\
     fm-harness-precedence.test.sh|\
-    fm-kimi-harness.test.sh|fm-devin-harness.test.sh|fm-commandcode-harness.test.sh|fm-muse-harness.test.sh|fm-rovo-harness.test.sh|fm-agy-harness.test.sh|fm-omp-harness.test.sh|fm-polytoken-harness.test.sh|fm-herdr-lab.test.sh|fm-lint.test.sh|\
+    fm-kimi-harness.test.sh|fm-devin-harness.test.sh|fm-commandcode-harness.test.sh|fm-codebuddy-harness.test.sh|fm-qoder-harness.test.sh|fm-muse-harness.test.sh|fm-rovo-harness.test.sh|fm-agy-harness.test.sh|fm-omp-harness.test.sh|fm-polytoken-harness.test.sh|fm-herdr-lab.test.sh|fm-lint.test.sh|\
     fm-lint-workflows.test.sh|\
     fm-operational-input.test.sh|fm-pi-primary-types.test.sh|\
     fm-calm-claude-mod.test.sh|\
@@ -727,6 +728,7 @@ tests/fm-claude-stop-autoarm-live-e2e.test.sh 73
 tests/fm-claude-stop-autoarm.test.sh 61189
 tests/fm-claude-trust.test.sh 12010
 tests/fm-cmux-claude-composer-live-e2e.test.sh 77
+tests/fm-codebuddy-harness.test.sh 5000
 tests/fm-codex-continuity-live-e2e.test.sh 108
 tests/fm-codex-hook-layer-live-e2e.test.sh 108
 tests/fm-commandcode-harness.test.sh 8182
@@ -812,6 +814,7 @@ tests/fm-procevent-when.test.sh 25674
 tests/fm-procevent.test.sh 292297
 tests/fm-project-origin.test.sh 123
 tests/fm-public-followup.test.sh 381564
+tests/fm-qoder-harness.test.sh 5000
 tests/fm-quota-array-dispatch-live-e2e.test.sh 50
 tests/fm-quota-choose.test.sh 2860
 tests/fm-remote-backlog-handoff.test.sh 82063
