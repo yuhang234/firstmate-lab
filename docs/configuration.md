@@ -879,6 +879,9 @@ Qoder is verified for crewmate and scout launches only; a secondmate is refused 
 Its launch uses `--dangerously-skip-permissions` for unattended execution (there is no `--yolo`), `--reasoning-effort` for effort, `/quit` for exit, and `Escape` for interrupt, and it takes the launch brief as a positional query.
 Its folder-trust prompt is pre-registered before launch through `bin/fm-harness-trust.sh` for the same reason; [its adapter reference](../.agents/skills/harness-adapters/references/harness/qoder.md) owns the launch facts and [Qoder verification](verification/qoder.md) owns the live evidence.
 
+MiniMax Code (`mcode`) is verified for crewmate and scout launches only; a secondmate is refused because MiniMax Code has no verified primary supervision protocol.
+Its launch uses `/exit` for exit, `Escape` for interrupt, `--effort` for effort, and it takes the launch brief as a positional argument rather than a `--prompt` flag; [its adapter reference](../.agents/skills/harness-adapters/references/harness/mcode.md) owns the launch facts and [mcode verification](verification/mcode.md) owns the live evidence.
+
 ### Verification and primary supervision
 
 New harnesses get verified through a supervised trial task before joining the set.
@@ -1316,7 +1319,7 @@ Typed resolution additively recognizes `gemini` because AGENTS.md section 4 veri
 | Harness | Provider declaration on the opted-in resolver path |
 | --- | --- |
 | `claude`, `codex`, `grok`, `kimi`, `cursor`, `agy`, `muse` | The resolver has an authoritative single-provider mapping. |
-| Every other verified harness | Must declare `provider` explicitly; this includes multi-provider `pi`, `pi-signed`, `omp`, and `opencode`, and unmapped `gemini`, `rovo`, `devin`, `commandcode`, `codebuddy`, and `qoder`; omission is an actionable configuration error before any request. |
+| Every other verified harness | Must declare `provider` explicitly; this includes multi-provider `pi`, `pi-signed`, `omp`, and `opencode`, and unmapped `gemini`, `rovo`, `devin`, `commandcode`, `codebuddy`, `qoder`, and `mcode`; omission is an actionable configuration error before any request. |
 
 This single-provider table is separate from the frozen legacy mapping used by `fm-quota-choose.sh`, so additions cannot alter no-key routing.
 
