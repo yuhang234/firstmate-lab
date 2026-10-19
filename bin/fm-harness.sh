@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Detect the agent harness this process tree runs on.
-# Usage: fm-harness.sh                  print own harness: claude|codex|opencode|pi|pi-signed|grok|kimi|cursor|gemini|muse|rovo|omp|agy|devin|commandcode|polytoken|unknown
+# Usage: fm-harness.sh                  print own harness: claude|codex|opencode|pi|pi-signed|grok|kimi|cursor|gemini|muse|rovo|omp|agy|devin|commandcode|polytoken|codebuddy|qoder|unknown
 #        fm-harness.sh crew             print the effective CREWMATE harness
 #                                        (config/crew-harness; "default" resolves to own)
 #        fm-harness.sh secondmate       print the harness the PRIMARY uses to launch
@@ -143,7 +143,7 @@ harness_marker() {
   # identified, and any rule that must be RELIABLE under grok has to test the hook
   # markers too (see .claude/settings.json Stop entries, docs/turnend-guard.md).
   [ "${GROK_AGENT:-}" = "1" ] && { echo grok; return; }
-  # codex, opencode, kimi, muse, agy, devin, commandcode, and polytoken publish no harness-identity marker at all, so
+  # codex, opencode, kimi, muse, agy, devin, commandcode, polytoken, codebuddy, and qoder publish no harness-identity marker at all, so
   # they are never named here and are identified by ancestry alone. That is the
   # whole reason a foreign marker must not outrank ancestry: with markers winning
   # unconditionally, any retained CLAUDECODE would silently rename one of them.
@@ -256,6 +256,8 @@ harness_process_verdict() {  # <pid>
     # the kernel process name is exactly `command-code` (verified, Command Code
     # 1.74.1: comm=command-code and the rewritten argv is the same word).
     # Anchored, so an unrelated command containing that fragment never matches.
+    codebuddy) echo "comm codebuddy"; return ;;
+    qoder) echo "comm qoder"; return ;;
     command-code) echo "comm commandcode"; return ;;
     node*|python*)
       # Bare interpreter: match the harness name in its script path.
@@ -269,6 +271,8 @@ harness_process_verdict() {  # <pid>
         *codex*) echo "args codex"; return ;;
         *opencode*) echo "args opencode"; return ;;
         *grok*) echo "args grok"; return ;;
+        *codebuddy*) echo "args codebuddy"; return ;;
+        *qoder*) echo "args qoder"; return ;;
         *" pi "*|*/pi) echo "args pi"; return ;;
       esac ;;
   esac
@@ -415,7 +419,7 @@ supervision_primary_pin() {
   local pin=${FM_SUPERVISION_PRIMARY_HARNESS:-}
   [ "${FM_SUPERVISION_ACTOR:-}" = branch ] && [ -n "$pin" ] || return 0
   case "$pin" in
-    claude|codex|opencode|pi|pi-signed|grok|kimi|cursor|gemini|muse|rovo|omp|agy|devin|commandcode|polytoken)
+    claude|codex|opencode|pi|pi-signed|grok|kimi|cursor|gemini|muse|rovo|omp|agy|devin|commandcode|polytoken|codebuddy|qoder)
       printf '%s\n' "$pin"
       ;;
     *)
