@@ -2638,8 +2638,12 @@ launch_template() {
   # when a supported effort is requested, since a second --config-override
   # would silently discard the first (confirmed live).
   rovo) printf '%s' 'env -u CLAUDECODE -u PI_CODING_AGENT -u GROK_AGENT -u FM_PI_HARNESS __ROVOBIN__ run --yolo __MODELFLAG____ROVOCONFIGOVERRIDE__' ;;
-  codebuddy) printf '%s' 'env -u CLAUDECODE -u PI_CODING_AGENT -u GROK_AGENT -u FM_PI_HARNESS -u GEMINI_CLI -u CURSOR_AGENT -u CURSOR_INVOKED_AS __CODEBUDDYBIN__ --dangerously-skip-permissions __MODELFLAG____EFFORTFLAG__--prompt "$(__OPINPUT__ encode launch-brief < __BRIEF__)"' ;;
-  qoder) printf '%s' 'env -u CLAUDECODE -u PI_CODING_AGENT -u GROK_AGENT -u FM_PI_HARNESS -u GEMINI_CLI -u CURSOR_AGENT -u CURSOR_INVOKED_AS __QODERBIN__ --yolo __MODELFLAG____EFFORTFLAG__--prompt "$(__OPINPUT__ encode launch-brief < __BRIEF__)"' ;;
+  # codebuddy 2.169.0 takes the initial prompt as a POSITIONAL argument; it has
+  # no --prompt flag (that launch dies with "unknown option '--prompt'").
+  codebuddy) printf '%s' 'env -u CLAUDECODE -u PI_CODING_AGENT -u GROK_AGENT -u FM_PI_HARNESS -u GEMINI_CLI -u CURSOR_AGENT -u CURSOR_INVOKED_AS __CODEBUDDYBIN__ --dangerously-skip-permissions __MODELFLAG____EFFORTFLAG__"$(__OPINPUT__ encode launch-brief < __BRIEF__)"' ;;
+  # qoder 1.1.73 has no --yolo and no --prompt: autonomy is
+  # --dangerously-skip-permissions and the query is positional.
+  qoder) printf '%s' 'env -u CLAUDECODE -u PI_CODING_AGENT -u GROK_AGENT -u FM_PI_HARNESS -u GEMINI_CLI -u CURSOR_AGENT -u CURSOR_INVOKED_AS __QODERBIN__ --dangerously-skip-permissions __MODELFLAG____EFFORTFLAG__"$(__OPINPUT__ encode launch-brief < __BRIEF__)"' ;;
   *) return 1 ;;
   esac
 }
@@ -3109,9 +3113,17 @@ effort_flag_for_harness() {
     low | medium | high) printf -- '--effort %s ' "$(shell_quote "$effort")" ;;
     esac
     ;;
-  codebuddy | qoder)
+  codebuddy)
+    # codebuddy 2.169.0 --effort accepts minimal|low|medium|high|xhigh|max.
     case "$effort" in
     low | medium | high | xhigh | max) printf -- '--effort %s ' "$(shell_quote "$effort")" ;;
+    esac
+    ;;
+  qoder)
+    # qoder 1.1.73 spells effort --reasoning-effort; levels beyond
+    # low|medium|high are unverified, so they are omitted (record-and-omit).
+    case "$effort" in
+    low | medium | high) printf -- '--reasoning-effort %s ' "$(shell_quote "$effort")" ;;
     esac
     ;;
   commandcode)
@@ -5145,6 +5157,22 @@ agy)
     else
       echo "warning: could not pre-register agy workspace trust for $WT; the launch will answer the folder-trust dialog in window $T instead" >&2
     fi
+  fi
+  ;;
+# CodeBuddy and Qoder each gate a fresh worktree behind their own folder-trust
+# prompt, and each honours a trusted-path entry written ahead of launch
+# (bin/fm-harness-trust.sh writes CodeBuddy's settings.json trustedDirectories
+# and Qoder's permissions.trustDirectories), so the same pre-registration
+# removes the prompt for them. Neither exposes a hook surface or a readiness
+# probe firstmate could use to answer the prompt from the pane, so unlike agy
+# there is no post-launch gate to fall back on: a failed registration is fatal
+# here, exactly as it is for claude, because the alternative is a pane parked
+# on a dialog firstmate cannot answer. Both are crewmate/scout only (refused
+# above for secondmate), so only the worktree shape applies.
+codebuddy|qoder)
+  if ! "$FM_ROOT/bin/fm-harness-trust.sh" "$HARNESS" "$WT" "$PROJ_ABS" >/dev/null; then
+    echo "error: could not pre-register $HARNESS folder trust for $WT; refusing to launch a worker that would wedge on its trust prompt; $(spawn_endpoint_hint)" >&2
+    exit 1
   fi
   ;;
 esac

@@ -909,15 +909,41 @@ fm_busy_agy_tail_busy() {
 }
 
 # fm_busy_codebuddy_tail_busy: the CodeBuddy-only rendered-tail fallback.
+# Consumes the tail on stdin; 0 when CodeBuddy's verified busy signature
+# matches. CodeBuddy renders a single animated status line while a turn runs,
+# of the shape `✹ Beeping… (9s · waiting for model)`,
+# `✸ Chilling… (5s · running REPL)`, or
+# `✹ Calculating… (11s · running REPL ·   18 tokens)` - verified live on
+# codebuddy 2.169.0 - so the durable marker is the parenthesized elapsed-time
+# phase itself, matched as `(<seconds>s` followed by anything up to the closing
+# paren: the separator glyph between the elapsed time and the phase word is a
+# multi-byte character, so naming it would either break the pattern or drag
+# non-ASCII bytes into this file. The bare words
+# `thinking`/`generating` are deliberately NOT matched: CodeBuddy persists a
+# `∴ Thought` transcript label per reasoning block, so matching it classified
+# idle panes as busy in live capture. CodeBuddy exposes no hook surface, so
+# this fallback is the only pane-side source; it is never armed as a semantic
+# writer (fm_busy_sources_for_harness trusts nothing for it).
+# FM_BUSY_CODEBUDDY_REGEX overrides the signature.
 fm_busy_codebuddy_tail_busy() {
   grep -v '^[[:space:]]*$' | tail -12 \
-    | grep -qiE "${FM_BUSY_CODEBUDDY_REGEX:-esc to (cancel|interrupt)|thinking|generating}"
+    | grep -qiE "${FM_BUSY_CODEBUDDY_REGEX:-\([0-9]+s[^)]*\)|esc to (cancel|interrupt)}"
 }
 
 # fm_busy_qoder_tail_busy: the Qoder-only rendered-tail fallback.
+# Consumes the tail on stdin; 0 when Qoder's verified busy signature matches:
+# the `esc to cancel` token in the status row Qoder pins above its input box
+# while a turn runs (`⠋ Generating... (esc to cancel, 14s)`), verified live on
+# qoder 1.1.73; the idle status row shows `? for shortcuts` instead. The bare
+# `thinking`/`generating` words are deliberately NOT matched for the same
+# reason as CodeBuddy's: Qoder persists a ` Thinking` transcript label per
+# reasoning block, which classified idle panes as busy in live capture. Qoder
+# exposes no hook surface, so this fallback is the only pane-side source; it
+# is never armed as a semantic writer (fm_busy_sources_for_harness trusts
+# nothing for it). FM_BUSY_QODER_REGEX overrides the signature.
 fm_busy_qoder_tail_busy() {
   grep -v '^[[:space:]]*$' | tail -12 \
-    | grep -qiE "${FM_BUSY_QODER_REGEX:-esc to (cancel|interrupt)|thinking|generating}"
+    | grep -qiE "${FM_BUSY_QODER_REGEX:-esc to (cancel|interrupt)}"
 }
 
 # --- launch-prompt signatures (fm_busy_launch_prompt_parked) ----------------
