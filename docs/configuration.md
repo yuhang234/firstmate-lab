@@ -872,10 +872,12 @@ The launch generates a private per-task config directory that mirrors the operat
 The first-start license dialog requires an operator decision and is never accepted automatically.
 
 CodeBuddy is verified for crewmate and scout launches only; a secondmate is refused because CodeBuddy has no verified primary supervision protocol.
-Its launch uses `--dangerously-skip-permissions` for unattended autonomous execution, `/exit` for exit, and `Escape` for interrupt; [its adapter reference](../.agents/skills/harness-adapters/references/harness/codebuddy.md) owns the launch facts and [CodeBuddy verification](verification/codebuddy.md) owns the live evidence.
+Its launch uses `--dangerously-skip-permissions` for unattended autonomous execution, `/exit` for exit, and `Escape` for interrupt, and it takes the launch brief as a positional argument rather than a `--prompt` flag.
+Its folder-trust prompt is pre-registered before launch through `bin/fm-harness-trust.sh`, because the pane cannot be steered past that prompt and the adapter exposes no readiness probe; [its adapter reference](../.agents/skills/harness-adapters/references/harness/codebuddy.md) owns the launch facts and [CodeBuddy verification](verification/codebuddy.md) owns the live evidence.
 
 Qoder is verified for crewmate and scout launches only; a secondmate is refused because Qoder has no verified primary supervision protocol.
-Its launch uses `--yolo` for unattended execution, `/quit` for exit, and `Escape` for interrupt; [its adapter reference](../.agents/skills/harness-adapters/references/harness/qoder.md) owns the launch facts and [Qoder verification](verification/qoder.md) owns the live evidence.
+Its launch uses `--dangerously-skip-permissions` for unattended execution (there is no `--yolo`), `--reasoning-effort` for effort, `/quit` for exit, and `Escape` for interrupt, and it takes the launch brief as a positional query.
+Its folder-trust prompt is pre-registered before launch through `bin/fm-harness-trust.sh` for the same reason; [its adapter reference](../.agents/skills/harness-adapters/references/harness/qoder.md) owns the launch facts and [Qoder verification](verification/qoder.md) owns the live evidence.
 
 ### Verification and primary supervision
 

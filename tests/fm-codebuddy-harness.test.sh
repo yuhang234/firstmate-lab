@@ -44,10 +44,16 @@ fm_control_harness_supports_kind codebuddy scout || fail 'scout refused'
 pass "worker-only resolution, single-press interrupt, and lifecycle capabilities"
 
 # --- 3. Busy signal matching --------------------------------------------------
-for signal in 'Thinking...' 'Generating response...' 'esc to interrupt'; do
+# The durable busy marker is the animated status line's parenthesized
+# elapsed-time phase; its phase word cycles, so the word itself is not matched.
+for signal in '✹ Beeping… (9s · waiting for model)' '✸ Chilling… (5s · running REPL)' '✷ Notifying… (36s · running REPL · 18 tokens)' 'esc to cancel'; do
   printf '%s\n' "$signal" | fm_busy_lines_match codebuddy || fail "independent delivery signal lost: $signal"
 done
-! printf 'Ask a question...\nDone!\n' | fm_busy_lines_match codebuddy || fail 'idle read as busy'
+# A finished turn keeps a persisted `∴ Thought` label and an idle footer, so
+# matching bare `thinking` would read every idle pane as busy.
+for idle in '∴ Thought' '● Command finished successfully after 25 seconds.' '✔ Worked for 34s' '> Proceed with the next task or command   ↵ send' '⏵⏵ bypass permissions on'; do
+  ! printf '%s\n' "$idle" | fm_busy_lines_match codebuddy || fail "idle read as busy: $idle"
+done
 pass "CodeBuddy busy signal matching"
 
 # --- 4. Spawn template generation --------------------------------------------
@@ -70,7 +76,20 @@ out=$(spawn_case cb-1 cb-model medium) || fail "spawn failed: $out"
 launch=$(cat "$case_dir/cb-1.launch")
 assert_contains "$launch" '--dangerously-skip-permissions' 'autonomous execution flag missing'
 assert_contains "$launch" "--model 'cb-model' --effort 'medium' " 'model or verified effort lost'
-assert_contains "$launch" '--prompt' 'prompt flag missing'
+# CodeBuddy takes the brief as a POSITIONAL argument; `--prompt` does not exist.
+case "$launch" in
+  *'--prompt'*) fail 'launch passed --prompt, which CodeBuddy rejects' ;;
+esac
+assert_contains "$launch" "launch-brief" 'positional brief missing'
+# A fresh worktree is recorded in CodeBuddy's own trust store before launch, so
+# the agent never parks on its folder-trust dialog. fm_test_run_spawn launches
+# with a throwaway HOME at $home/user-home.
+node -e '
+  const fs = require("node:fs");
+  const [store, wt] = process.argv.slice(1);
+  const listed = JSON.parse(fs.readFileSync(store, "utf8")).trustedDirectories || [];
+  if (!listed.includes(wt)) { console.error("missing " + wt); process.exit(1); }
+' "$home/user-home/.codebuddy/settings.json" "$wt" || fail 'the worktree was not pre-registered for CodeBuddy trust'
 
 if out=$(fm_test_run_spawn "$home" "$wt" "$fakebin" cb-sm "$proj" --secondmate --harness codebuddy 2>&1)
 then fail 'CodeBuddy secondmate launch accepted'; fi

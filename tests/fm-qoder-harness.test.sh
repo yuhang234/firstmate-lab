@@ -44,10 +44,16 @@ fm_control_harness_supports_kind qoder scout || fail 'scout refused'
 pass "worker-only resolution, single-press interrupt, and lifecycle capabilities"
 
 # --- 3. Busy signal matching --------------------------------------------------
-for signal in 'Thinking...' 'Generating response...' 'esc to interrupt'; do
+# Qoder pins the `esc to cancel` token in the status row above its input box
+# while a turn runs; its idle row shows `? for shortcuts` instead.
+for signal in '⠋ Generating... (esc to cancel, 6s)' '⠋ Generating... (esc to cancel, 14s)'; do
   printf '%s\n' "$signal" | fm_busy_lines_match qoder || fail "independent delivery signal lost: $signal"
 done
-! printf 'Ready for questions\nCompleted\n' | fm_busy_lines_match qoder || fail 'idle read as busy'
+# A finished turn leaves its ` Thinking` reasoning label and the composer
+# placeholder in the tail, so matching the bare word would read idle as busy.
+for idle in ' Thinking' '▪ The command completed successfully.' '? for shortcuts' '*   Type your message or @path/to/file' 'YOLO Shift+Tab to Auto Mode'; do
+  ! printf '%s\n' "$idle" | fm_busy_lines_match qoder || fail "idle read as busy: $idle"
+done
 pass "Qoder busy signal matching"
 
 # --- 4. Spawn template generation --------------------------------------------
@@ -68,9 +74,35 @@ spawn_case() {  # <id> <model> <effort>
 
 out=$(spawn_case qd-1 qd-model high) || fail "spawn failed: $out"
 launch=$(cat "$case_dir/qd-1.launch")
-assert_contains "$launch" '--yolo' 'autonomous execution flag missing'
-assert_contains "$launch" "--model 'qd-model' --effort 'high' " 'model or verified effort lost'
-assert_contains "$launch" '--prompt' 'prompt flag missing'
+assert_contains "$launch" '--dangerously-skip-permissions' 'autonomous execution flag missing'
+case "$launch" in
+  *'--yolo'*) fail 'launch passed --yolo, which Qoder rejects' ;;
+esac
+# Qoder spells effort `--reasoning-effort` and takes the brief positionally.
+assert_contains "$launch" "--model 'qd-model' --reasoning-effort 'high' " 'model or verified effort lost'
+case "$launch" in
+  *'--prompt'*|*"--effort '"*) fail 'launch passed a flag Qoder rejects' ;;
+esac
+assert_contains "$launch" "launch-brief" 'positional brief missing'
+
+# A firstmate effort level Qoder does not accept is recorded and omitted rather
+# than passed through or silently downgraded to a level it does accept.
+out=$(spawn_case qd-2 qd-model xhigh) || fail "spawn failed: $out"
+launch=$(cat "$case_dir/qd-2.launch")
+case "$launch" in
+  *'--reasoning-effort'*) fail 'an unsupported effort level reached the Qoder command line' ;;
+esac
+assert_contains "$launch" "--model 'qd-model' " 'model lost when the effort level was omitted'
+
+# A fresh worktree is recorded in Qoder's own trust store before launch, so the
+# agent never parks on its folder-trust dialog. fm_test_run_spawn launches with a
+# throwaway HOME at $home/user-home.
+node -e '
+  const fs = require("node:fs");
+  const [store, wt] = process.argv.slice(1);
+  const listed = (JSON.parse(fs.readFileSync(store, "utf8")).permissions || {}).trustDirectories || [];
+  if (!listed.includes(wt)) { console.error("missing " + wt); process.exit(1); }
+' "$home/user-home/.qoder/settings.json" "$wt" || fail 'the worktree was not pre-registered for Qoder trust'
 
 if out=$(fm_test_run_spawn "$home" "$wt" "$fakebin" qd-sm "$proj" --secondmate --harness qoder 2>&1)
 then fail 'Qoder secondmate launch accepted'; fi

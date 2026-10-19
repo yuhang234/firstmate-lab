@@ -445,8 +445,19 @@ FM_DELIVERY_AGY_BUSY_REGEX_DEFAULT='esc[[:space:]]+to[[:space:]]+cancel'
 # no recorded harness never reads it as busy.
 FM_DELIVERY_POLYTOKEN_BUSY_REGEX_DEFAULT='^[[:space:]]*Running for [0-9]+([.][0-9]+)?s'
 FM_DELIVERY_KIMI_BUSY_REGEX_DEFAULT='^[[:space:]]*(🌑|🌒|🌓|🌔|🌕|🌖|🌗|🌘)[[:space:]]+·[[:space:]]+'
-FM_DELIVERY_CODEBUDDY_BUSY_REGEX_DEFAULT='esc to (cancel|interrupt)|thinking|generating'
-FM_DELIVERY_QODER_BUSY_REGEX_DEFAULT='esc to (cancel|interrupt)|thinking|generating'
+# codebuddy and qoder (CodeBuddy, Qoder) pin their own busy status rows. CodeBuddy
+# renders a single animated line whose phase word cycles (`✹ Beeping… (9s ·
+# waiting for model)`), so the durable token is the parenthesized elapsed-time
+# phase; the separator glyph inside it is multi-byte and is covered by the
+# `[^)]*` tail rather than named here. Qoder pins `esc to cancel` in the row
+# above its input box (`⠋ Generating... (esc to cancel, 14s)`) and shows
+# `? for shortcuts` when idle. Neither vendor's bare `thinking`/`generating`
+# word is matched: both persist a per-block reasoning label (`∴ Thought`,
+# ` Thinking`) that made every idle pane read busy in live capture. Delivery
+# guard only; recorded worker state comes from the codebuddy-regex and
+# qoder-regex folds in bin/fm-busy-lib.sh.
+FM_DELIVERY_CODEBUDDY_BUSY_REGEX_DEFAULT='\([0-9]+s[^)]*\)|esc[[:space:]]+to[[:space:]]+(cancel|interrupt)'
+FM_DELIVERY_QODER_BUSY_REGEX_DEFAULT='esc[[:space:]]+to[[:space:]]+(cancel|interrupt)'
 
 fm_busy_lines_match() {  # [harness]
   local harness=${1:-} lines regex
